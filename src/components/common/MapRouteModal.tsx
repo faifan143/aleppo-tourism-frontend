@@ -14,8 +14,9 @@ interface MapModalProps {
   onClose: () => void;
 }
 
+// يمكنك استبدال هذا بمفتاح Mapbox الخاص بك
 const MAPBOX_TOKEN =
-  "pk.eyJ1IjoibW9ra3MiLCJhIjoiY20zdno3MXl1MHozNzJxcXp5bmdvbTllYyJ9.Ed_O6F-c2IZJE9DoCyPZ2Q"; // Replace with your Mapbox token
+  "pk.eyJ1IjoibW9ra3MiLCJhIjoiY20zdno3MXl1MHozNzJxcXp5bmdvbTllYyJ9.Ed_O6F-c2IZJE9DoCyPZ2Q";
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
@@ -32,13 +33,14 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
 
   const { setSnackbarConfig } = useMokkBar();
 
+  // الحصول على طريق المسار
   const getRoute = async (start: [number, number], end: [number, number]) => {
     try {
       const response = await fetch(
         `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${MAPBOX_TOKEN}`
       );
 
-      if (!response.ok) throw new Error("Failed to fetch route information");
+      if (!response.ok) throw new Error("فشل في جلب معلومات المسار");
 
       const data = await response.json();
 
@@ -46,20 +48,20 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
         setSnackbarConfig({
           open: true,
           severity: "warning",
-          message: "No route found for the selected destination",
+          message: "لم يتم العثور على مسار للوجهة المحددة",
         });
         return;
       }
 
       const route = data.routes[0].geometry.coordinates;
-      const distance = (data.routes[0].distance / 1000).toFixed(1); // Distance in km
-      const duration = Math.ceil(data.routes[0].duration / 60); // Duration in minutes
+      const distance = (data.routes[0].distance / 1000).toFixed(1); // المسافة بالكيلومتر
+      const duration = Math.ceil(data.routes[0].duration / 60); // المدة بالدقائق
       setRouteInfo({
         distance: parseFloat(distance),
         duration:
           duration > 60
-            ? `${Math.floor(duration / 60)} hr ${duration % 60} min`
-            : `${duration} min`,
+            ? `${Math.floor(duration / 60)} ساعة ${duration % 60} دقيقة`
+            : `${duration} دقيقة`,
       });
 
       if (!map.current) return;
@@ -67,7 +69,7 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
       const sourceId = "route";
       const layerId = "routeLine";
 
-      // Clean up any existing route
+      // إزالة أي مسار موجود من قبل
       if (map.current.getLayer(layerId)) map.current.removeLayer(layerId);
       if (map.current.getSource(sourceId)) map.current.removeSource(sourceId);
 
@@ -92,38 +94,49 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
         },
       });
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "حدث خطأ أثناء تحميل المسار";
+
       setSnackbarConfig({
         open: true,
         severity: "error",
-        message: error.message || "An error occurred while loading the route",
+        message: errorMessage
       });
     }
   };
 
   useEffect(() => {
+    // محاولة الحصول على الموقع الجغرافي بدقة عالية وبغض النظر عن الكاش
     if (navigator.geolocation) {
+      const options = {
+        enableHighAccuracy: true, // للحصول على أدق موقع ممكن
+        timeout: 10000, // 10 ثواني كحد أقصى للحصول على الموقع
+        maximumAge: 0 // عدم استخدام الكاش نهائياً، والحصول على موقع جديد كل مرة
+      };
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { longitude, latitude } = position.coords;
+          console.log("تم الحصول على الموقع الحقيقي:", latitude, longitude);
           setUserLocation([longitude, latitude]);
           setLoading(false);
         },
         (error) => {
-          console.error(error);
+          console.error("خطأ في الحصول على الموقع:", error);
           setSnackbarConfig({
             open: true,
             severity: "error",
-            message: "Failed to access your location. Please enable GPS.",
+            message: "فشل في الوصول إلى موقعك. يرجى تفعيل خدمة GPS.",
           });
           setLoading(false);
         },
-        { enableHighAccuracy: true }
+        options
       );
     } else {
       setSnackbarConfig({
         open: true,
         severity: "error",
-        message: "Your browser does not support geolocation services.",
+        message: "متصفحك لا يدعم خدمات تحديد الموقع الجغرافي.",
       });
       setLoading(false);
     }
@@ -141,6 +154,7 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
           (userLocation[1] + placeLat) / 2,
         ],
         zoom: 12,
+        language: 'en' // تعيين لغة الخريطة إلى العربية
       });
 
       map.current.on("load", () => {
@@ -148,12 +162,12 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
 
         new mapboxgl.Marker({ color: "#3B82F6" })
           .setLngLat(userLocation)
-          .setPopup(new mapboxgl.Popup().setHTML("<p>Your Location</p>"))
+          .setPopup(new mapboxgl.Popup().setHTML("<p>موقعك الحالي</p>"))
           .addTo(map.current);
 
         new mapboxgl.Marker({ color: "#8B5CF6" })
           .setLngLat([placeLng, placeLat])
-          .setPopup(new mapboxgl.Popup().setHTML("<p>Destination</p>"))
+          .setPopup(new mapboxgl.Popup().setHTML("<p>الوجهة</p>"))
           .addTo(map.current);
 
         getRoute(userLocation, [placeLng, placeLat]);
@@ -197,12 +211,12 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
           <div className="bg-gradient-to-r from-amber-900 to-amber-600 p-4 flex justify-between items-center">
             <div className="flex items-center gap-2 text-white">
               <MapPin className="w-5 h-5" />
-              <h3 className="text-lg font-semibold">Route Map</h3>
+              <h3 className="text-lg font-semibold">خريطة المسار</h3>
               {routeInfo && (
                 <div className="flex items-center gap-4 mr-4">
                   <span className="flex items-center gap-1">
                     <Car className="w-4 h-4" />
-                    {routeInfo.distance} km
+                    {routeInfo.distance} كم
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
@@ -223,7 +237,7 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
               <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
                 <div className="flex items-center gap-2 text-amber-900">
                   <Loader2 className="w-6 h-6 animate-spin" />
-                  <span>Loading Map...</span>
+                  <span>جاري تحميل الخريطة...</span>
                 </div>
               </div>
             ) : (

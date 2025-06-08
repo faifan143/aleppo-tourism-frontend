@@ -1,6 +1,6 @@
 "use client";
 
-const PageSpinner = ({}: { title?: string }) => {
+const PageSpinner = ({ }: { title?: string }) => {
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex justify-center items-center z-50">
       <div className="flex flex-col items-center gap-3 bg-black/10 px-8 py-6 rounded-2xl backdrop-blur-xl">
@@ -9,7 +9,7 @@ const PageSpinner = ({}: { title?: string }) => {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="w-1 h-8 bg-blue-500 rounded-full"
+              className="w-1 h-8 bg-amber-500 rounded-full"
               style={{
                 animation: "pulse 1s ease-in-out infinite",
                 animationDelay: `${i * 0.15}s`,

@@ -4,24 +4,28 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import userReducer from "./reducers/userSlice";
 import wrapperReducer from "./reducers/wrapper.slice";
-const persistConfig = {
+
+// Persist configuration for user reducer only
+const userPersistConfig = {
   key: "user",
   storage,
+  whitelist: ['user', 'accessToken'] // Only persist these fields
 };
+
+// Apply persist to user reducer only
+const persistedUserReducer = persistReducer(userPersistConfig, userReducer);
+
+// Create the root reducer
 const rootReducer = combineReducers({
-  user: userReducer,
+  user: persistedUserReducer,
   wrapper: wrapperReducer,
 });
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
 export const store = configureStore({
-  reducer: {
-    user: persistedReducer,
-  },
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: false, // Disable serializableCheck for redux-persist
     }),
 });
 
