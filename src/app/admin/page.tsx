@@ -21,6 +21,9 @@ import { toast } from "react-hot-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { PlaceModal } from "@/components/common/MapModal";
 import Cookies from "js-cookie";
+import { tourismApi } from "@/utils/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/hooks/useCustomQuery";
 
 export default function AdminPage() {
   // Set up state
@@ -35,6 +38,7 @@ export default function AdminPage() {
   // Get places data
   const { data: places = [], isLoading } = usePlaces();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Filter places based on search term and active tab
   const filteredPlaces = places.filter((place) => {
@@ -54,10 +58,11 @@ export default function AdminPage() {
     if (placeToDelete === null) return;
 
     try {
-      // This is just a placeholder - in a real app, call your delete API
+      await tourismApi.delete(placeToDelete);
       toast.success("تم حذف المكان بنجاح");
       setIsConfirmDialogOpen(false);
       setPlaceToDelete(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ALL_PLACES });
     } catch (error) {
       console.error("Error deleting place:", error);
       toast.error("حدث خطأ أثناء حذف المكان");
@@ -102,35 +107,39 @@ export default function AdminPage() {
   const handlePlaceSubmit = async (formData: FormData) => {
     try {
       // Get admin ID from JWT token
-      const adminToken = Cookies.get("admin_token");
-
-      if (adminToken) {
+      const accessToken = Cookies.get("access_token");
+      let adminId: number | null = null;
+      if (accessToken) {
         try {
-          const tokenData = JSON.parse(atob(adminToken.split('.')[1]));
-          const adminId = tokenData.id;
-
-          if (adminId) {
-            formData.append('adminId', adminId.toString());
-
-            if (modalType === "add") {
-              // Here you would call your create place API
-              toast.success("تم إضافة المكان بنجاح");
-            } else if (selectedPlace) {
-              // Here you would call your update place API
-              toast.success("تم تحديث المكان بنجاح");
-            }
-
-            setIsModalOpen(false);
-            setSelectedPlace(null);
-          } else {
-            toast.error("معرف المسؤول غير موجود");
+          const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
+          if (tokenData.role === 'ADMIN') {
+            adminId = tokenData.id;
           }
-        } catch (error) {
-          toast.error("حدث خطأ في معلومات المدير");
+        } catch (e) {
+          adminId = null;
         }
-      } else {
-        toast.error("يجب تسجيل الدخول كمدير");
       }
+      if (adminId) {
+        formData.append('adminId', adminId.toString());
+      }
+
+      if (modalType === "add") {
+        await tourismApi.create(formData);
+        toast.success("تم إضافة المكان بنجاح");
+      } else if (selectedPlace) {
+        const updatedData = new FormData();
+        for (const [key, value] of formData.entries()) {
+          if (key !== "photos" && key !== "events" && key !== "reviews") {
+            updatedData.append(key, value);
+          }
+        }
+        await tourismApi.update(selectedPlace.id, updatedData);
+        toast.success("تم تحديث المكان بنجاح");
+      }
+
+      setIsModalOpen(false);
+      setSelectedPlace(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ALL_PLACES });
     } catch (error) {
       console.error("Error submitting place:", error);
       toast.error("حدث خطأ أثناء حفظ المكان");

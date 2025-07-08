@@ -158,6 +158,10 @@ export function PlaceModal({
         if (key === "visitTimeStart" || key === "visitTimeEnd") {
           return;
         }
+        // Skip photos, events, and reviews as they are not part of the editable fields
+        else if (key === "photos" || key === "events" || key === "reviews") {
+          return;
+        }
         // Handle image field
         else if (key === "coverImage" && value instanceof File) {
           formData.append(key, value);

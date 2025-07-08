@@ -50,7 +50,7 @@ export const registerUser = createAsyncThunk(
       console.log("Register response:", response);
 
       if (response && response.token) {
-        // Store token in cookie
+        Cookies.remove("admin_token"); // Clear admin token
         Cookies.set("access_token", response.token);
         return response;
       } else {
@@ -82,7 +82,7 @@ export const loginUser = createAsyncThunk(
       console.log("Login response:", response);
 
       if (response && response.token) {
-        // Store token in cookie
+        Cookies.remove("admin_token"); // Clear admin token
         Cookies.set("access_token", response.token);
         return response;
       } else {

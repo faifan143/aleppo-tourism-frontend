@@ -1,8 +1,11 @@
-import { MapPin } from "lucide-react";
+"use client"
+import { Check, Copy, MapPin, Settings } from "lucide-react";
+import { useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
+// Simple MapPicker Component
 interface MapPickerProps {
   latitude?: number;
   longitude?: number;
@@ -35,6 +38,7 @@ export function MapPicker({
         style: "mapbox://styles/mapbox/streets-v12",
         center: [initialLng, initialLat],
         zoom: zoom,
+        attributionControl: false,
       });
 
       // Add controls
@@ -68,15 +72,17 @@ export function MapPicker({
     }
   }, [initialLat, initialLng, zoom, onChange]);
 
+  // Update marker position when props change
+  useEffect(() => {
+    if (map.current && marker.current && (initialLat !== markerLocation[1] || initialLng !== markerLocation[0])) {
+      marker.current.setLngLat([initialLng, initialLat]);
+      map.current.setCenter([initialLng, initialLat]);
+      setMarkerLocation([initialLng, initialLat]);
+    }
+  }, [initialLat, initialLng]);
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <MapPin className="w-4 h-4" />
-          <span>اختر الموقع على الخريطة</span>
-        </div>
-      </div>
-
       <div className="relative h-[300px] rounded-xl overflow-hidden border-2 border-gray-100 hover:border-purple-400 transition-colors">
         <div ref={mapContainer} className="w-full h-full" />
       </div>
@@ -88,3 +94,4 @@ export function MapPicker({
     </div>
   );
 }
+

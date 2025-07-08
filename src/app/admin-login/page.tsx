@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Shield, LockKeyhole, AtSign } from "lucide-react";
 import Cookies from "js-cookie";
+import { toast } from "react-hot-toast";
 
 const AdminLoginPage = () => {
     const [email, setEmail] = useState("admin@example.com");
@@ -27,26 +28,27 @@ const AdminLoginPage = () => {
         }
 
         try {
-            console.log("Submitting admin login with:", email);
-            const response = await apiClient.post<{ token: string }>("/admin/login", {
+            const response = await apiClient.post<{ token: string }>("/users/login", {
                 email,
                 password
             });
 
-            console.log("Admin login response:", response);
-
-            // Check if the response contains a token
             if (response && response.token) {
-                // Store the admin token
-                Cookies.set("admin_token", response.token);
-
-                // Redirect to admin panel
-                router.push("/admin");
+                Cookies.remove("access_token");
+                Cookies.set("access_token", response.token);
+                // Decode token to check role
+                const tokenData = JSON.parse(atob(response.token.split('.')[1]));
+                if (tokenData.role === 'ADMIN') {
+                    toast.success("تم تسجيل الدخول بنجاح كمدير");
+                    router.push("/admin");
+                } else {
+                    setLoginError("هذا الحساب ليس حساب مدير.");
+                    Cookies.remove("access_token");
+                }
             } else {
                 setLoginError("خطأ في بيانات المستخدم أو كلمة المرور");
             }
         } catch (err: any) {
-            console.error("Admin login error:", err);
             const errorMessage = err.response?.data?.message || "حدث خطأ أثناء تسجيل الدخول";
             setLoginError(errorMessage);
         } finally {

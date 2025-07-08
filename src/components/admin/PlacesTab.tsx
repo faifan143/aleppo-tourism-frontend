@@ -162,8 +162,8 @@ export default function PlacesTab() {
                     <button
                         onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${isFiltersOpen
-                                ? "border-purple-400 bg-purple-50 text-purple-600"
-                                : "border-gray-200 hover:border-gray-300"
+                            ? "border-purple-400 bg-purple-50 text-purple-600"
+                            : "border-gray-200 hover:border-gray-300"
                             }`}
                     >
                         <SlidersHorizontal className="w-5 h-5" />
@@ -261,8 +261,8 @@ export default function PlacesTab() {
                                 key={i}
                                 onClick={() => setCurrentPage(i + 1)}
                                 className={`w-10 h-10 rounded-lg ${currentPage === i + 1
-                                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                                        : "border hover:bg-gray-50"
+                                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                                    : "border hover:bg-gray-50"
                                     }`}
                             >
                                 {i + 1}
@@ -280,32 +280,29 @@ export default function PlacesTab() {
                 initialData={selectedPlace || undefined}
                 onSubmit={async (formData) => {
                     // Get admin ID from JWT token
-                    const adminToken = Cookies.get("admin_token");
-
-                    if (adminToken) {
+                    const accessToken = Cookies.get("access_token");
+                    let adminId: number | null = null;
+                    if (accessToken) {
                         try {
-                            const tokenData = JSON.parse(atob(adminToken.split('.')[1]));
-                            const adminId = tokenData.id;
-
-                            if (adminId) {
-                                formData.append('adminId', adminId.toString());
-
-                                if (modalType === "add") {
-                                    await createPlaceMutation.mutateAsync(formData);
-                                } else if (selectedPlace) {
-                                    await updatePlaceMutation.mutateAsync({
-                                        id: selectedPlace.id,
-                                        formData,
-                                    });
-                                }
-                            } else {
-                                toast.error("معرف المسؤول غير موجود");
+                            const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
+                            if (tokenData.role === 'ADMIN') {
+                                adminId = tokenData.id;
                             }
-                        } catch (error) {
-                            toast.error("حدث خطأ في معلومات المدير");
+                        } catch (e) {
+                            adminId = null;
                         }
-                    } else {
-                        toast.error("يجب تسجيل الدخول كمدير");
+                    }
+                    if (adminId) {
+                        formData.append('adminId', adminId.toString());
+                    }
+
+                    if (modalType === "add") {
+                        await createPlaceMutation.mutateAsync(formData);
+                    } else if (selectedPlace) {
+                        await updatePlaceMutation.mutateAsync({
+                            id: selectedPlace.id,
+                            formData,
+                        });
                     }
                 }}
                 isLoading={createPlaceMutation.isPending || updatePlaceMutation.isPending}

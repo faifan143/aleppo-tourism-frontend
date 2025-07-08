@@ -14,19 +14,11 @@ const api = axios.create({
 
 // Add request interceptor to include the auth token if available
 api.interceptors.request.use((config) => {
-  // Check for regular user token first
+  // Use a single access_token for both users and admins
   const token = Cookies.get("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
-  // Check for admin token and use it if available
-  // Admin token takes precedence over user token
-  const adminToken = Cookies.get("admin_token");
-  if (adminToken) {
-    config.headers.Authorization = `Bearer ${adminToken}`;
-  }
-
   return config;
 });
 
@@ -42,7 +34,6 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token
       Cookies.remove("access_token");
-      Cookies.remove("admin_token");
 
       // Show error toast
       toast.error("انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.");

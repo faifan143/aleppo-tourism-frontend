@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+import dynamic from 'next/dynamic';
 import { MapRouteModal } from "@/components/common/MapRouteModal";
 import AddReviewForm from "@/components/AddReviewForm";
 import { usePlaces } from "@/hooks/useCustomQuery";
@@ -23,6 +25,16 @@ import {
   Star,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+
+// Properly import MapView using Next.js dynamic import
+const MapView = dynamic(() => import('@/components/common/MapView'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[70vh] bg-amber-50 rounded-2xl flex items-center justify-center">
+      <div className="text-amber-600">جاري تحميل الخريطة...</div>
+    </div>
+  )
+});
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -320,7 +332,7 @@ const Home = () => {
     return peakTime;
   };
 
-  const [activeTab, setActiveTab] = useState("places"); // "places" or "events"
+  const [activeTab, setActiveTab] = useState("places"); // "places", "events", or "map"
 
   // Define type for enhanced event object
   type EnhancedTourismEvent = TourismEvent & {
@@ -486,15 +498,27 @@ const Home = () => {
                 <Calendar className="h-4 w-4 inline-block ml-1" />
                 الفعاليات
               </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab("map")}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${activeTab === "map"
+                  ? "bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md"
+                  : "text-amber-700 hover:bg-amber-100/50"
+                  }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A2 2 0 013 15.382V6.618a2 2 0 011.553-1.946l6-1.5a2 2 0 01.894 0l6 1.5A2 2 0 0121 6.618v8.764a2 2 0 01-1.553 1.946L15 20m-6 0V4m6 16V4" /></svg>
+                على الخريطة
+              </motion.button>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-500 text-white rounded-xl hover:shadow-lg transition-all duration-200 font-semibold"
+              className=" bg-gradient-to-r from-amber-600 to-amber-500 text-yellow-100 text-md rounded-xl hover:shadow-lg transition-all duration-200 font-semibold   p-2"
             >
-              <Filter className="h-5 w-5 inline-block ml-2" />
+              <Filter className="h-5 w-5 inline-block ml-2  " />
               خيارات التصفية
             </motion.button>
           </div>
@@ -825,7 +849,7 @@ const Home = () => {
                   whileHover={{ y: -8, scale: 1.02 }}
                   className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl border border-amber-100 transform transition-all duration-300"
                 >
-                  <div className="relative h-56">
+                  <div className="relative h-48">
                     <motion.img
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.4 }}
@@ -844,70 +868,38 @@ const Home = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-2xl font-bold text-amber-900 mb-3 font-noto-kufi">
+                    <h3 className="text-xl font-bold text-amber-900 mb-2 font-noto-kufi">
                       {place.name}
                     </h3>
                     <p className="text-amber-800/80 mb-4 line-clamp-2">
                       {place.description}
                     </p>
-
-                    {/* Status badges */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {/* Rating badge */}
-                      {place.reviews && place.reviews.length > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-100 text-amber-800 text-xs font-medium">
-                          <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                          {(place.reviews.reduce((sum, review) => sum + review.rating, 0) / place.reviews.length).toFixed(1)}
-                        </span>
-                      )}
-
-                      {/* Open now badge */}
-                      {place.visitTimeRange && (
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md ${isPlaceOpen(place.visitTimeRange) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} text-xs font-medium`}>
-                          <Clock className="h-3 w-3" />
-                          {isPlaceOpen(place.visitTimeRange) ? 'مفتوح الآن' : 'مغلق'}
-                        </span>
-                      )}
-
-                      {/* Events badge */}
-                      {place.events && place.events.length > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-medium">
-                          <Calendar className="h-3 w-3" />
-                          {place.events.length} فعالية
-                        </span>
-                      )}
+                    <div className="flex items-center text-sm text-amber-700 mb-4">
+                      <Calendar className="h-4 w-4 ml-2" />
+                      <span>{place.visitTimeRange || "غير محدد"}</span>
                     </div>
-
-                    <div className="flex justify-between items-center">
-                      <div className="flex gap-4 flex-wrap">
-                        <span className="flex items-center gap-1 text-amber-700 text-sm">
-                          <Camera className="h-4 w-4" />
-                          {place.photos.length} صور
-                        </span>
-                        <span className="flex items-center gap-1 text-amber-700 text-sm">
-                          <Clock className="h-4 w-4" />
-                          {translatePeakTime(place.expectedPeakTime)}
-                        </span>
-                        {place.reviews && (
-                          <span className="flex items-center gap-1 text-amber-700 text-sm">
-                            <Star className="h-4 w-4" />
-                            {place.reviews.length} تقييم
-                          </span>
-                        )}
-                      </div>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setSelectedPlace(place)}
-                        className="flex items-center gap-1 text-amber-900 text-sm font-semibold hover:text-amber-700"
-                      >
-                        <BookOpen className="h-4 w-4" />
-                        اكتشف المزيد
-                      </motion.button>
-                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setSelectedPlace(place)}
+                      className="flex items-center gap-1 text-amber-900 text-sm font-semibold hover:text-amber-700 mt-2"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      عرض التفاصيل
+                    </motion.button>
                   </div>
                 </motion.article>
               ))}
+            </motion.div>
+          ) : activeTab === "map" ? (
+            <motion.div
+              key="map-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <MapView places={filteredPlaces} />
             </motion.div>
           ) : (
             // Events grid
@@ -1304,4 +1296,5 @@ const Home = () => {
   );
 };
 
-export default Home;
+
+export default Home

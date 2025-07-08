@@ -224,3 +224,8 @@ body::-webkit-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Mapbox Attribution Control */
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}

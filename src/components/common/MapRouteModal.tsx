@@ -154,7 +154,8 @@ export function MapRouteModal({ placeLat, placeLng, onClose }: MapModalProps) {
           (userLocation[1] + placeLat) / 2,
         ],
         zoom: 12,
-        language: 'en' // تعيين لغة الخريطة إلى العربية
+        language: 'en', // تعيين لغة الخريطة إلى العربية
+        attributionControl: false, // Disable attribution control
       });
 
       map.current.on("load", () => {

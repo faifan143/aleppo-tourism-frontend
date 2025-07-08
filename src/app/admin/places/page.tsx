@@ -8,6 +8,9 @@ import { PlaceModal } from "@/components/common/MapModal";
 import { toast } from "react-hot-toast";
 import Cookies from "js-cookie";
 import { TourismPlace } from "@/types/type";
+import { tourismApi } from "@/utils/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/hooks/useCustomQuery";
 
 export default function PlacesAdminPage() {
     const { data: places = [], isLoading } = usePlaces();
@@ -16,6 +19,7 @@ export default function PlacesAdminPage() {
     const [selectedPlace, setSelectedPlace] = useState<TourismPlace | null>(null);
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [placeToDelete, setPlaceToDelete] = useState<number | null>(null);
+    const queryClient = useQueryClient();
 
     // Handle edit place click
     const handleEditClick = (place: TourismPlace) => {
@@ -35,10 +39,11 @@ export default function PlacesAdminPage() {
         if (placeToDelete === null) return;
 
         try {
-            // Mock deletion success
+            await tourismApi.delete(placeToDelete);
             toast.success("تم حذف المكان بنجاح");
             setIsConfirmDialogOpen(false);
             setPlaceToDelete(null);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ALL_PLACES });
         } catch (error) {
             console.error("Error deleting place:", error);
             toast.error("حدث خطأ أثناء حذف المكان");
@@ -59,15 +64,16 @@ export default function PlacesAdminPage() {
                         formData.append('adminId', adminId.toString());
 
                         if (modalType === "add") {
-                            // Here you would call your create place API
+                            await tourismApi.create(formData);
                             toast.success("تم إضافة المكان بنجاح");
                         } else if (selectedPlace) {
-                            // Here you would call your update place API
+                            await tourismApi.update(selectedPlace.id, formData);
                             toast.success("تم تحديث المكان بنجاح");
                         }
 
                         setIsModalOpen(false);
                         setSelectedPlace(null);
+                        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ALL_PLACES });
                     } else {
                         toast.error("معرف المسؤول غير موجود");
                     }
