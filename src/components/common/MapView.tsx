@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { TourismPlace, PlaceCategory } from "@/types/type";
+import { API_URL } from "@/utils/axios";
 
 // Fix Leaflet's default markers in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -26,6 +27,12 @@ const categoryLabels: Record<PlaceCategory, string> = {
   RELIGIOUS: "ديني",
   EDUCATIONAL: "تعليمي",
 };
+
+function getImageUrl(path: string) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${API_URL}${path}`;
+}
 
 interface MapViewProps {
   places: TourismPlace[];
@@ -122,7 +129,7 @@ const MapView: React.FC<MapViewProps> = ({ places }) => {
       const popupContent = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-width: 200px;">
           <div style="margin-bottom: 8px;">
-            <img src="${place.coverImage}" alt="${place.name}" 
+            <img src="${getImageUrl(place.coverImage)}" alt="${place.name}" 
                  style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;" />
           </div>
           <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 16px; font-weight: bold;">
