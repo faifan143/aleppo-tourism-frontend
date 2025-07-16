@@ -76,6 +76,10 @@ export function PlaceModal({
   const [activeStep, setActiveStep] = useState(1);
   const totalSteps = 3;
 
+  // Add state for multiple photos
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -159,7 +163,8 @@ export function PlaceModal({
           return;
         }
         // Skip photos, events, and reviews as they are not part of the editable fields
-        else if (key === "photos" || key === "events" || key === "reviews") {
+        else if (key === "photos") {
+          // handled below
           return;
         }
         // Handle image field
@@ -171,6 +176,9 @@ export function PlaceModal({
           formData.append(key, value as string);
         }
       });
+
+      // Append all photos
+      photos.forEach((file) => formData.append('photos', file));
 
       await onSubmit(formData);
     } catch (error) {
@@ -193,6 +201,13 @@ export function PlaceModal({
       setPreviewImage(URL.createObjectURL(file)); // Set preview URL
       setValue("coverImage", file); // Set the file in the form state
     }
+  };
+
+  // Add handler for multiple photo input
+  const handlePhotosChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setPhotos(files);
+    setPhotoPreviews(files.map(file => URL.createObjectURL(file)));
   };
 
   const nextStep = async () => {
@@ -573,6 +588,43 @@ export function PlaceModal({
                           </div>
                         </div>
                       )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          صور إضافية للمكان
+                        </label>
+                        <div className="mt-1 group relative cursor-pointer">
+                          <div className="relative border-2 border-dashed rounded-xl px-6 pt-5 pb-6 flex flex-col items-center bg-gray-50 hover:border-purple-400 hover:bg-purple-50 transition-all duration-200">
+                            <div className="space-y-2 text-center w-full">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="mb-2"
+                                onChange={handlePhotosChange}
+                              />
+                              <div className="grid grid-cols-3 gap-2 mt-2">
+                                {photoPreviews.map((src, idx) => (
+                                  <div key={idx} className="relative">
+                                    <img src={src} alt="Preview" className="h-20 w-full object-cover rounded" />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setPhotos(photos => photos.filter((_, i) => i !== idx));
+                                        setPhotoPreviews(previews => previews.filter((_, i) => i !== idx));
+                                      }}
+                                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">PNG، JPG بحد أقصى 10MB لكل صورة</p>
+                      </div>
                     </motion.div>
                   )}
 

@@ -11,7 +11,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
   Calendar,
-  Camera,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -25,6 +24,7 @@ import {
   Star,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { API_URL } from "@/utils/axios";
 
 // Properly import MapView using Next.js dynamic import
 const MapView = dynamic(() => import('@/components/common/MapView'), {
@@ -74,6 +74,13 @@ function getDistance(from: Coordinates, to: Coordinates): number {
 // تحويل الدرجات إلى راديان
 function deg2rad(deg: number): number {
   return deg * (Math.PI / 180);
+}
+
+// Helper to get full image URL
+function getImageUrl(path: string) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${API_URL}${path}`;
 }
 
 const Home = () => {
@@ -853,10 +860,23 @@ const Home = () => {
                     <motion.img
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.4 }}
-                      src={place.coverImage}
+                      src={getImageUrl(place.coverImage)}
                       alt={place.name}
                       className="w-full h-full object-cover"
                     />
+                    {/* Additional photos gallery */}
+                    {place.photos && place.photos.length > 0 && (
+                      <div className="absolute bottom-2 left-2 right-2 flex gap-2 overflow-x-auto bg-white/70 rounded-lg p-1 shadow-inner">
+                        {place.photos.slice(0, 5).map((photo) => (
+                          <img
+                            key={photo.id}
+                            src={getImageUrl(photo.url)}
+                            alt={place.name + ' صورة إضافية'}
+                            className="h-10 w-16 object-cover rounded shadow"
+                          />
+                        ))}
+                      </div>
+                    )}
                     <div className="absolute top-3 left-3 bg-white/80 text-amber-800 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm flex items-center gap-1">
                       <Tag className="h-3 w-3" />
                       {place.category === "ARCHAEOLOGICAL" && "أثري"}
@@ -934,7 +954,7 @@ const Home = () => {
                       <motion.img
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.4 }}
-                        src={event.image || event.place?.coverImage}
+                        src={getImageUrl(event.image || event.place?.coverImage || '')}
                         alt={event.name}
                         className="w-full h-full object-cover"
                       />
@@ -1062,7 +1082,7 @@ const Home = () => {
                 >
                   <div className="relative aspect-video">
                     <img
-                      src={selectedPlace.coverImage}
+                      src={getImageUrl(selectedPlace.coverImage)}
                       alt={selectedPlace.name}
                       className="w-full h-full object-cover"
                     />
@@ -1144,7 +1164,7 @@ const Home = () => {
                             className="relative aspect-video rounded-lg overflow-hidden shadow-lg"
                           >
                             <img
-                              src={photo.url}
+                              src={getImageUrl(photo.url)}
                               alt={`${selectedPlace.name} صورة`}
                               className="w-full h-full object-cover"
                             />
@@ -1246,7 +1266,7 @@ const Home = () => {
         </AnimatePresence>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {activeTab != "map" && totalPages > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

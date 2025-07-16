@@ -20,6 +20,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Cookies from 'js-cookie';
+import { API_URL } from "@/utils/axios";
 
 interface TourismPlace {
     id: number;
@@ -46,6 +47,12 @@ const schema = yup.object({
 });
 
 type FormInputs = yup.InferType<typeof schema>;
+
+function getImageUrl(path: string) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${API_URL}${path}`;
+}
 
 export default function PlacesTab() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -186,7 +193,7 @@ export default function PlacesTab() {
                         >
                             <div className="relative h-48 overflow-hidden">
                                 <img
-                                    src={place.coverImage}
+                                    src={getImageUrl(place.coverImage)}
                                     alt={place.name}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />

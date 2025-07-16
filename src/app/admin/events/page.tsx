@@ -8,6 +8,13 @@ import { formatDate } from "@/utils/dateUtils";
 import { Calendar, Loader2, MapPin, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { API_URL } from "@/utils/axios";
+
+function getImageUrl(path: string) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${API_URL}${path}`;
+}
 
 export default function EventsAdminPage() {
     // State
@@ -153,7 +160,7 @@ export default function EventsAdminPage() {
                             >
                                 <div className="relative h-48 overflow-hidden">
                                     <img
-                                        src={event.image || "/placeholder-event.jpg"}
+                                        src={getImageUrl(event.image) || "/placeholder-event.jpg"}
                                         alt={event.name}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />

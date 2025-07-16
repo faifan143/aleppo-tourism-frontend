@@ -3,8 +3,7 @@ import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 import { toast } from "react-hot-toast";
 
-// Use direct backend URL
-const API_URL = 'http://localhost:8000';
+export const API_URL = 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL,

@@ -72,18 +72,13 @@ const MapView: React.FC<MapViewProps> = ({ places }) => {
         mapInstanceRef.current?.removeLayer(cartoLayer);
         osmLayer.addTo(mapInstanceRef.current!);
       });
-
-      // Add controls
-      const layerControl = L.control.layers({
-        "Carto Voyager": cartoLayer,
-        "OpenStreetMap": osmLayer,
-      }).addTo(mapInstanceRef.current);
     }
 
     // Clear existing markers
     markersRef.current.forEach(marker => {
       mapInstanceRef.current?.removeLayer(marker);
     });
+
     markersRef.current = [];
 
     // Add markers for places
@@ -161,11 +156,11 @@ const MapView: React.FC<MapViewProps> = ({ places }) => {
 
       // Add hover effects
       marker.on('mouseover', function (this: L.Marker) {
-        this.getElement()?.style.setProperty('transform', 'scale(1.1)');
+        this.getElement()?.classList.add('marker-hover');
       });
 
       marker.on('mouseout', function (this: L.Marker) {
-        this.getElement()?.style.setProperty('transform', 'scale(1)');
+        this.getElement()?.classList.remove('marker-hover');
       });
 
       marker.addTo(mapInstanceRef.current);
@@ -191,8 +186,9 @@ const MapView: React.FC<MapViewProps> = ({ places }) => {
         .custom-popup .leaflet-popup-tip {
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .custom-marker div:hover {
-          transform: scale(1.1) !important;
+        .custom-marker.marker-hover div {
+          transform: scale(1.1);
+          transition: transform 0.2s;
         }
       `;
       document.head.appendChild(style);

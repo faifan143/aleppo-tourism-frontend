@@ -24,6 +24,13 @@ import Cookies from "js-cookie";
 import { tourismApi } from "@/utils/axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/hooks/useCustomQuery";
+import { API_URL } from "@/utils/axios";
+
+function getImageUrl(path: string) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${API_URL}${path}`;
+}
 
 export default function AdminPage() {
   // Set up state
@@ -302,7 +309,7 @@ export default function AdminPage() {
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                             <img
-                              src={place.coverImage}
+                              src={getImageUrl(place.coverImage)}
                               alt={place.name}
                               className="h-full w-full object-cover"
                             />
